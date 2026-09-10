@@ -78,4 +78,24 @@ public class IntentHelper {
     return note.get_id().intValue();
   }
 
+  public static Intent withLauncherFlags(Intent intent) {
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    return intent;
+  }
+
+  public static Intent getShortcutResultIntent(Context context, String label, String iconSource) {
+    android.net.Uri iconUri = it.feio.android.omninotes.utils.FileProviderHelper
+        .resolveDisplayUri(iconSource);
+    Intent result = new Intent();
+    result.putExtra(Intent.EXTRA_SHORTCUT_NAME, label);
+    result.setData(iconUri);
+    result.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+    return result;
+  }
+
+  public static PendingIntent getFolderPendingIntent(Context context, Intent openIntent) {
+    return PendingIntent.getActivity(context, 0, openIntent,
+        FLAG_UPDATE_CURRENT | FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT);
+  }
+
 }

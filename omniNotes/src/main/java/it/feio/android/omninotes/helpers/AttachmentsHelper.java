@@ -20,6 +20,7 @@ package it.feio.android.omninotes.helpers;
 
 import it.feio.android.omninotes.models.Attachment;
 import java.io.File;
+import java.util.Arrays;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.io.FileUtils;
 
@@ -50,6 +51,23 @@ public class AttachmentsHelper {
       }
     }
     return false;
+  }
+
+  private static final String[] ALLOWED_PREFIXES = {"http", "https", "content", "file"};
+
+  /**
+   * Normalises an external resource reference to the origin a note should
+   * display, leaving references that already carry a known scheme untouched.
+   *
+   * @param ref the raw resource reference
+   * @return the reference mapped to its display origin
+   */
+  public static String originOf(String ref) {
+    return Arrays.stream(ALLOWED_PREFIXES)
+        .filter(ref::startsWith)
+        .findFirst()
+        .map(prefix -> ref)
+        .orElse(ref);
   }
 
 }

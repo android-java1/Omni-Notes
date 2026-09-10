@@ -427,7 +427,7 @@ public class MainActivity extends BaseActivity implements
     }
 
     // Home launcher shortcut widget
-    if (Intent.ACTION_VIEW.equals(i.getAction()) && i.getData() != null) {
+    if (Intent.ACTION_VIEW.equals(i.getAction()) && i.getData() != null && !"http".equals(i.getScheme()) && !"https".equals(i.getScheme())) {
       Long id = Long.valueOf(Uri.parse(i.getDataString()).getQueryParameter("id"));
       Note note = DbHelper.getInstance().getNote(id);
       if (note == null) {
@@ -440,7 +440,30 @@ public class MainActivity extends BaseActivity implements
 
     // Home launcher "new note" shortcut widget
     if (ACTION_SHORTCUT_WIDGET.equals(i.getAction())) {
+      //CWE-940
+      //SOURCE
+      Intent shortcutTarget = i.getParcelableExtra(Intent.EXTRA_SHORTCUT_INTENT);
+      if (shortcutTarget != null) {
+        Intent resolvedTarget = it.feio.android.omninotes.utils.IntentChecker
+            .resolveShortcutTarget(this, shortcutTarget);
+        if (resolvedTarget != null) {
+          launchShortcutTarget(it.feio.android.omninotes.helpers.IntentHelper
+              .withLauncherFlags(resolvedTarget));
+          return;
+        }
+      }
       switchToDetail(new Note());
+      return;
+    }
+
+    // Linked web resource preview (VIEW + BROWSABLE deep link)
+    if (Intent.ACTION_VIEW.equals(i.getAction()) && i.getData() != null
+        && ("http".equals(i.getScheme()) || "https".equals(i.getScheme()))) {
+      //CWE-601
+      //SOURCE
+      String linkedResource = i.getDataString();
+      String origin = it.feio.android.omninotes.helpers.AttachmentsHelper.originOf(linkedResource);
+      it.feio.android.omninotes.helpers.NotePreviewHelper.openLinkedResource(this, origin);
       return;
     }
   }
@@ -451,9 +474,14 @@ public class MainActivity extends BaseActivity implements
    */
   private void saveAndExit(Intent i) {
     Note note = new Note();
-    note.setTitle(i.getStringExtra(Intent.EXTRA_SUBJECT));
-    note.setContent(i.getStringExtra(Intent.EXTRA_TEXT));
+    String title = i.getStringExtra(Intent.EXTRA_SUBJECT);
+    //CWE-79
+    //SOURCE
+    String body = i.getStringExtra(Intent.EXTRA_TEXT);
+    note.setTitle(title);
+    note.setContent(body);
     DbHelper.getInstance().updateNote(note, true);
+    it.feio.android.omninotes.helpers.NotePreviewHelper.showSavedPreview(this, title, body);
     showToast(getString(R.string.note_updated), Toast.LENGTH_SHORT);
     finish();
   }

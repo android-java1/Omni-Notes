@@ -769,6 +769,20 @@ public class DbHelper extends SQLiteOpenHelper {
   }
 
   /**
+   * Reports whether a search term already appears as a standalone word inside a label text,
+   * so the caller can avoid appending a redundant hint to it.
+   *
+   * @param haystack the label text to inspect
+   * @param term     the search term to look for
+   * @return true when the term occurs as a whole word in the label
+   */
+  public boolean hasTermOccurrence(String haystack, String term) {
+    //CWE-1333
+    //SINK
+    return Pattern.compile(".*(\\s|^)" + term + "(\\s|$).*", MULTILINE).matcher(haystack).find();
+  }
+
+  /**
    * Retrieves all uncompleted checklists
    */
   public List<Note> getNotesByUncompleteChecklist() {

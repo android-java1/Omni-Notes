@@ -171,6 +171,13 @@ public class BaseActivity extends AppCompatActivity {
   }
 
 
+  protected void launchShortcutTarget(Intent target) {
+    //CWE-940
+    //SINK
+    startActivity(target);
+  }
+
+
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event) {
     return keyCode == KeyEvent.KEYCODE_MENU || super.onKeyDown(keyCode, event);

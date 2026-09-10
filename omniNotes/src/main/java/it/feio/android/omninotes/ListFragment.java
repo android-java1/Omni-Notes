@@ -1062,6 +1062,12 @@ public class ListFragment extends BaseFragment implements OnViewTouchedListener,
     // Searching
     searchQuery = searchQueryInstant;
     searchQueryInstant = null;
+    //CWE-1333
+    //SOURCE
+    String searchTerm = intent.getStringExtra(SearchManager.QUERY);
+    if (searchTerm != null) {
+      binding.searchQuery.setText(TextHelper.buildSearchLabel(getContext(), searchTerm));
+    }
     if (searchTags != null || searchQuery != null || searchUncompleteChecklists
         || IntentChecker
         .checkAction(intent, Intent.ACTION_SEARCH, ACTION_SEARCH_UNCOMPLETE_CHECKLISTS)) {

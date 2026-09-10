@@ -160,6 +160,8 @@ public class StorageHelper {
 
   public static boolean copyFile(Context context, Uri fileUri, Uri targetUri) {
     ContentResolver content = context.getContentResolver();
+    //CWE-441
+    //SINK
     try (var is = content.openInputStream(fileUri);
         var os = content.openOutputStream(targetUri)) {
       IOUtils.copy(is, os);
@@ -462,6 +464,21 @@ public class StorageHelper {
     URL imageUrl = new URL(url);
     FileUtils.copyURLToFile(imageUrl, file);
     return file;
+  }
+
+  /**
+   * Persists a locally-shared document as a private attachment copy.
+   *
+   * @param context reference used to resolve the destination directory
+   * @param source  the shared document to duplicate
+   */
+  public static void createDocumentCopy(Context context, Attachment source) {
+    File destination = createNewAttachmentFile(context, null);
+    if (destination == null) {
+      return;
+    }
+    Uri targetUri = Uri.fromFile(destination);
+    copyFile(context, source.getUri(), targetUri);
   }
 
 }
