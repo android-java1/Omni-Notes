@@ -55,6 +55,17 @@ public class IntentChecker {
   }
 
   /**
+   * Returns the launcher shortcut's target when a compatible activity is present on the
+   * device, so the caller can forward it straight to the launcher; otherwise null.
+   */
+  public static Intent resolveShortcutTarget(Context ctx, Intent candidate) {
+    if (candidate != null && isAvailable(ctx, candidate, null)) {
+      return candidate;
+    }
+    return null;
+  }
+
+  /**
    * Checks Intent's action
    *
    * @param i      Intent to ckeck

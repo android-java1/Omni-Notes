@@ -92,6 +92,14 @@ public class DataBackupIntentService extends IntentService implements OnAttachin
     BackupHelper.exportAttachments(backupDir, mNotificationsHelper);
 
     var readableBackupFolder = BackupHelper.getBackupFolderPath() + "/" + backupName;
+    //CWE-927
+    //SOURCE
+    Intent openIntent = new Intent(Intent.ACTION_VIEW);
+    Uri folderUri = Uri.parse(Prefs.getString(PREF_BACKUP_FOLDER_URI, null));
+    openIntent.setDataAndType(folderUri, "resource/folder");
+    PendingIntent openFolderIntent = it.feio.android.omninotes.helpers.IntentHelper
+        .getFolderPendingIntent(this, openIntent);
+    mNotificationsHelper.setOpenAction(openFolderIntent);
     mNotificationsHelper.finish(getString(R.string.data_export_completed), readableBackupFolder);
   }
 

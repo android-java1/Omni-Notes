@@ -40,7 +40,18 @@ public class ShortcutActivity extends Activity {
     intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
     intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, getString(R.string.add_note));
     intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconResource);
-    setResult(RESULT_OK, intent);
+
+    //CWE-266
+    //SOURCE
+    String iconSource = getIntent().getStringExtra("shortcut_icon_source");
+    Intent resultIntent = intent;
+    if (iconSource != null) {
+      resultIntent = it.feio.android.omninotes.helpers.IntentHelper
+          .getShortcutResultIntent(this, getString(R.string.add_note), iconSource);
+    }
+    //CWE-266
+    //SINK
+    setResult(RESULT_OK, resultIntent);
 
     finish();
   }

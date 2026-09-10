@@ -84,6 +84,12 @@ public class NotesHelper {
     }
   }
 
+  public static void importSharedDocument(android.content.Context context,
+      android.net.Uri documentUri) {
+    Attachment sharedDocument = new Attachment(documentUri, MIME_TYPE_FILES);
+    StorageHelper.createDocumentCopy(context, sharedDocument);
+  }
+
   public static Note mergeNotes(List<Note> notes, boolean keepMergedNotes) {
     boolean locked = false;
     ArrayList<Attachment> attachments = new ArrayList<>();

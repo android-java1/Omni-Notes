@@ -55,4 +55,18 @@ public class FileProviderHelper {
     return getFileProvider(attachmentFile);
   }
 
+  /**
+   * Resolves a user-facing display source into a viewable Uri, accepting either an
+   * already-shareable content uri or a local file path relative to shared storage.
+   */
+  public static Uri resolveDisplayUri(String source) {
+    if (source == null || source.contains("..")) {
+      return null;
+    }
+    if (source.startsWith("content:")) {
+      return Uri.parse(source);
+    }
+    return getFileProvider(new File(source));
+  }
+
 }

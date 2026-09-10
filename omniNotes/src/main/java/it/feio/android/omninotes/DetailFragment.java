@@ -1461,6 +1461,12 @@ public class DetailFragment extends BaseFragment implements OnReminderPickedList
     } else {
       uris.add(intent.getData());
     }
+    //CWE-441
+    //SOURCE
+    Uri sharedDocument = intent.getData();
+    if (sharedDocument != null && validatePath(sharedDocument.getPath())) {
+      it.feio.android.omninotes.helpers.NotesHelper.importSharedDocument(mainActivity, sharedDocument);
+    }
     for (Uri uri : uris) {
       String name = FileHelper.getNameFromUri(mainActivity, uri);
       new AttachmentTask(this, uri, name, this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);

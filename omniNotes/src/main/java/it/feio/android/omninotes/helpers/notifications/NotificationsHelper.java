@@ -136,6 +136,11 @@ public class NotificationsHelper {
     return mBuilder;
   }
 
+  public NotificationsHelper setOpenAction(PendingIntent pi) {
+    mBuilder.setContentIntent(pi);
+    return this;
+  }
+
   public NotificationsHelper setLargeIcon(Bitmap largeIconBitmap) {
     mBuilder.setLargeIcon(largeIconBitmap);
     return this;
@@ -230,6 +235,8 @@ public class NotificationsHelper {
   public void finish(int id, String title, String message) {
     mBuilder.setContentTitle(title).setContentText(message)
         .setProgress(0, 0, false).setOngoing(false);
+    //CWE-927
+    //SINK
     mNotificationManager.notify(id, mBuilder.build());
   }
 

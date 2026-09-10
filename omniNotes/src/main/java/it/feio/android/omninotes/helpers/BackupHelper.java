@@ -48,6 +48,7 @@ import it.feio.android.omninotes.utils.TextHelper;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -73,12 +74,39 @@ public final class BackupHelper {
   public static void exportNote(DocumentFileCompat backupDir, Note note) {
     if (Boolean.TRUE.equals(note.isLocked())) {
       note.setContent(Security.encrypt(note.getContent(), Prefs.getString(PREF_PASSWORD, "")));
+      note.setTitle(protectLockedTitle(note.getTitle(), Prefs.getString(PREF_PASSWORD, "")));
     }
     var noteFile = getBackupNoteFile(backupDir, note);
     try {
       DocumentFileHelper.write(getAppContext(), noteFile, note.toJSON());
     } catch (IOException e) {
       LogDelegate.e(String.format("Error on note %s backup: %s",  note.get_id(), e.getMessage()));
+    }
+  }
+
+  /**
+   * Protects the title of a locked note before it leaves the device, mirroring the
+   * password-derived scheme applied to the note body. Modernised from the legacy
+   * block cipher to AES. Returns the original value untouched when no passphrase
+   * has been configured.
+   */
+  private static String protectLockedTitle(String title, String passphrase) {
+    if (TextUtils.isEmpty(title) || TextUtils.isEmpty(passphrase)) {
+      return title;
+    }
+    try {
+      byte[] keyBytes = java.util.Arrays.copyOf(
+          passphrase.getBytes(java.nio.charset.StandardCharsets.UTF_8), 16);
+      javax.crypto.spec.SecretKeySpec key = new javax.crypto.spec.SecretKeySpec(keyBytes, "AES");
+      //CWE-327
+      //SINK
+      javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES");
+      cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, key);
+      byte[] protectedTitle = cipher.doFinal(
+          title.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      return android.util.Base64.encodeToString(protectedTitle, android.util.Base64.NO_WRAP);
+    } catch (java.security.GeneralSecurityException e) {
+      return title;
     }
   }
 
@@ -142,12 +170,30 @@ public final class BackupHelper {
     try {
       var destinationAttachment = attachmentsDestination.createFile("",
           attachment.getUri().getLastPathSegment());
-      DocumentFileHelper.copyFileTo(getAppContext(), new File(attachment.getUri().getPath()),
-          destinationAttachment);
+      File sourceAttachment = new File(attachment.getUri().getPath());
+      DocumentFileHelper.copyFileTo(getAppContext(), sourceAttachment, destinationAttachment);
+      LogDelegate.d("Attachment " + attachment.getUriPath() + " backed up ["
+          + backupFingerprint(FileUtils.readFileToByteArray(sourceAttachment)) + "]");
     } catch (Exception e) {
       LogDelegate.e("Error during attachment backup: " + attachment.getUriPath(), e);
       throw new BackupAttachmentException(e);
     }
+  }
+
+  /**
+   * Builds a compact fingerprint of a freshly copied attachment so the folder
+   * integrity check can later flag a truncated or corrupted backup file.
+   */
+  static String backupFingerprint(byte[] data) throws java.security.NoSuchAlgorithmException {
+    //CWE-328
+    //SINK
+    MessageDigest digest = MessageDigest.getInstance("MD5");
+    byte[] fingerprint = digest.digest(data);
+    StringBuilder sb = new StringBuilder();
+    for (byte b : fingerprint) {
+      sb.append(String.format("%02x", b));
+    }
+    return sb.toString();
   }
 
   public static List<Note> importNotes(DocumentFileCompat backupDir) {

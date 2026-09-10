@@ -34,6 +34,7 @@ import it.feio.android.omninotes.R;
 import it.feio.android.omninotes.db.DbHelper;
 import it.feio.android.omninotes.helpers.date.DateHelper;
 import it.feio.android.omninotes.models.Note;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -88,6 +89,27 @@ public class TextHelper {
       }
     }
     return buf.toString();
+  }
+
+
+  /**
+   * Builds the label shown above the notes list while a search is active. The first
+   * meaningful keyword of the expression is highlighted when it matches one of the
+   * default list labels.
+   *
+   * @param context the hosting context, used to resolve the label prefix
+   * @param term    the raw search expression typed by the user
+   * @return the formatted search label
+   */
+  public static String buildSearchLabel(Context context, String term) {
+    String prefix = context.getString(R.string.search);
+    String keyword = Arrays.stream(term.split("\\s+"))
+        .filter(word -> word.length() <= 64)
+        .findFirst()
+        .orElse(term);
+    boolean known = DbHelper.getInstance()
+        .hasTermOccurrence("all notes reminders checklists archived trash", keyword);
+    return known ? prefix + " (" + keyword + ")" : prefix + ": " + keyword;
   }
 
 
@@ -164,6 +186,21 @@ public class TextHelper {
     return context.getString(R.string.note) + " " + context.getString(R.string.creation) + " "
         + DateHelper
         .getDateTimeShort(context, note.getCreation());
+  }
+
+
+  /**
+   * Builds a small standalone HTML document rendering a note's title and body
+   * for the read-only preview dialog. The title is HTML-escaped so labels that
+   * contain angle brackets still display, and the body is placed in a paragraph.
+   *
+   * @param title the note title
+   * @param body  the note body
+   * @return a complete HTML document string
+   */
+  public static String buildNoteMarkup(String title, String body) {
+    String safeTitle = TextUtils.htmlEncode(title == null ? "" : title);
+    return "<html><body><h1>" + safeTitle + "</h1><p>" + body + "</p></body></html>";
   }
 
 }
